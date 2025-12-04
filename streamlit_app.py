@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 import plotly.graph_objects as go
 from website_diagnosis_tool import WebsiteDiagnosisTool
-from pdf_report_generator_bilingual import create_bilingual_pdf_report
+from pdf_report_generator import create_bilingual_pdf_report
 import os
 
 # ページ設定
