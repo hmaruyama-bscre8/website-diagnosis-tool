@@ -7,13 +7,15 @@
 import streamlit as st
 import sys
 from website_diagnosis_tool import WebsiteDiagnosisTool
+from pdf_report_generator import generate_pdf_report
 import json
 from datetime import datetime
 import plotly.graph_objects as go
+import os
 
 # ページ設定
 st.set_page_config(
-    page_title="ウェブサイト診断ツール",
+    page_title="ウェブサイト診断ツール - ビーズクリエイト",
     page_icon="🔍",
     layout="wide"
 )
@@ -26,7 +28,53 @@ st.markdown("""
         font-weight: bold;
         text-align: center;
         color: #1f77b4;
+        margin-bottom: 1rem;
+    }
+    .company-header {
+        text-align: center;
+        color: #333;
+        font-size: 1.1rem;
         margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .company-header h2 {
+        color: white;
+        margin-bottom: 0.5rem;
+        font-size: 2rem;
+    }
+    .company-header p {
+        color: white;
+        margin: 0.3rem 0;
+        font-size: 1.1rem;
+    }
+    .company-footer {
+        text-align: center;
+        color: #333;
+        font-size: 0.95rem;
+        margin-top: 3rem;
+        padding: 2.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .company-footer h3 {
+        color: white;
+        margin-bottom: 1rem;
+    }
+    .company-footer p {
+        color: white;
+        margin: 0.5rem 0;
+    }
+    .company-footer a {
+        color: #ffd700;
+        text-decoration: none;
+        font-weight: bold;
+    }
+    .company-footer a:hover {
+        text-decoration: underline;
     }
     .score-card {
         padding: 1.5rem;
@@ -53,17 +101,32 @@ st.markdown("""
     }
     .issue-box {
         padding: 1rem;
-        border-left: 4px solid #ff6b6b;
-        background-color: #ffe0e0;
-        margin: 0.5rem 0;
-        border-radius: 5px;
+        border-left: 5px solid #e74c3c;
+        background-color: #fff5f5;
+        margin: 0.7rem 0;
+        border-radius: 8px;
+        color: #2c3e50;
+        font-size: 1rem;
+        line-height: 1.6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     .success-box {
         padding: 1rem;
-        border-left: 4px solid #51cf66;
-        background-color: #d3f9d8;
-        margin: 0.5rem 0;
-        border-radius: 5px;
+        border-left: 5px solid #27ae60;
+        background-color: #f0fff4;
+        margin: 0.7rem 0;
+        border-radius: 8px;
+        color: #2c3e50;
+        font-size: 1rem;
+        line-height: 1.6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .download-section {
+        background: #f8f9fa;
+        padding: 2rem;
+        border-radius: 15px;
+        margin-top: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -104,7 +167,7 @@ def create_radar_chart(results):
         r=values,
         theta=categories,
         fill='toself',
-        line=dict(color='#1f77b4', width=2)
+        line=dict(color='#667eea', width=3)
     ))
     
     fig.update_layout(
@@ -128,12 +191,12 @@ def create_gauge_chart(score, title):
         title={'text': title},
         gauge={
             'axis': {'range': [None, 100]},
-            'bar': {'color': "darkblue"},
+            'bar': {'color': "#667eea"},
             'steps': [
                 {'range': [0, 40], 'color': "lightgray"},
                 {'range': [40, 60], 'color': "gray"},
                 {'range': [60, 80], 'color': "lightblue"},
-                {'range': [80, 100], 'color': "royalblue"}
+                {'range': [80, 100], 'color': "#667eea"}
             ],
             'threshold': {
                 'line': {'color': "red", 'width': 4},
@@ -146,8 +209,14 @@ def create_gauge_chart(score, title):
     fig.update_layout(height=250)
     return fig
 
-# メインUI
-st.markdown('<div class="main-header">🔍 ウェブサイト診断ツール</div>', unsafe_allow_html=True)
+# ヘッダー
+st.markdown("""
+<div class="company-header">
+    <h2>🔍 ウェブサイト診断ツール</h2>
+    <p><strong>B's Cre8（ビーズクリエイト）</strong></p>
+    <p>長野県上田市・東御市のWEBサイト制作会社</p>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 このツールは、ウェブサイトの以下の項目を包括的に診断します：
@@ -257,7 +326,7 @@ if st.button("🚀 診断を開始", type="primary"):
                         for level, headings in seo['headings'].items():
                             if headings:
                                 st.write(f"**{level.upper()}:** {len(headings)}個")
-                                for heading in headings[:5]:  # 最初の5個のみ表示
+                                for heading in headings[:5]:
                                     st.write(f"  - {heading}")
                 
                 # セキュリティタブ
@@ -286,7 +355,7 @@ if st.button("🚀 診断を開始", type="primary"):
                         st.markdown('<div class="success-box">✅ 問題は見つかりませんでした</div>', unsafe_allow_html=True)
                 
                 # パフォーマンスタブ
-                with tabs[3]:
+                with tabs[2]:
                     performance = results['performance']
                     col1, col2 = st.columns([1, 2])
                     
@@ -341,17 +410,53 @@ if st.button("🚀 診断を開始", type="primary"):
                         for landmark, count in accessibility['landmarks'].items():
                             st.write(f"**{landmark}:** {count}個")
                 
-                # JSONダウンロード
+                # ダウンロードセクション
                 st.markdown("---")
+                st.markdown('<div class="download-section">', unsafe_allow_html=True)
                 st.markdown("## 💾 診断結果のダウンロード")
+                st.markdown("診断結果をJSON形式またはPDF形式でダウンロードできます。")
                 
-                json_str = json.dumps(results, ensure_ascii=False, indent=2)
-                st.download_button(
-                    label="📥 JSON形式でダウンロード",
-                    data=json_str,
-                    file_name=f"diagnosis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                    mime="application/json"
-                )
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # JSONダウンロード
+                    json_str = json.dumps(results, ensure_ascii=False, indent=2)
+                    st.download_button(
+                        label="📥 JSON形式でダウンロード",
+                        data=json_str,
+                        file_name=f"diagnosis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                        mime="application/json",
+                        use_container_width=True
+                    )
+                    st.caption("構造化データ形式で詳細な診断結果を取得")
+                
+                with col2:
+                    # PDFダウンロード
+                    try:
+                        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                        pdf_filename = f"temp_diagnosis_report_{timestamp}.pdf"
+                        generate_pdf_report(results, pdf_filename)
+                        
+                        with open(pdf_filename, 'rb') as f:
+                            pdf_data = f.read()
+                        
+                        st.download_button(
+                            label="📄 PDF形式でダウンロード",
+                            data=pdf_data,
+                            file_name=f"diagnosis_report_{timestamp}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True
+                        )
+                        st.caption("見やすいレポート形式でダウンロード")
+                        
+                        # 一時ファイルの削除
+                        if os.path.exists(pdf_filename):
+                            os.remove(pdf_filename)
+                    except Exception as e:
+                        st.error(f"PDFの生成に失敗しました: {str(e)}")
+                        st.info("必要なライブラリがインストールされていない可能性があります")
+                
+                st.markdown('</div>', unsafe_allow_html=True)
                 
         except Exception as e:
             st.error(f"❌ エラーが発生しました: {str(e)}")
@@ -361,8 +466,20 @@ if st.button("🚀 診断を開始", type="primary"):
 # フッター
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #666;">
-    <p>🔍 ウェブサイト診断ツール v1.0</p>
+<div class="company-footer">
+    <h3>🔍 ウェブサイト診断ツール</h3>
+    <p><strong>B's Cre8（ビーズクリエイト）</strong></p>
+    <p>長野県上田市・東御市・東信地域のWEBサイト制作会社</p>
     <p>SEO、セキュリティ、パフォーマンス、アクセシビリティを包括的に診断</p>
+    <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid rgba(255,255,255,0.3);">
+    <p style="font-size: 1rem; margin-top: 1rem;">
+        🌐 Website: <a href="https://www.bscre8.com" target="_blank">www.bscre8.com</a>
+    </p>
+    <p style="font-size: 1rem;">
+        📧 お問い合わせ: <a href="https://www.bscre8.com/contact" target="_blank">お問い合わせフォーム</a>
+    </p>
+    <p style="font-size: 0.85rem; color: rgba(255,255,255,0.8); margin-top: 1.5rem;">
+        © 2024 B's Cre8 All Rights Reserved.
+    </p>
 </div>
 """, unsafe_allow_html=True)
