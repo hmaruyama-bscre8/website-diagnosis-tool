@@ -82,9 +82,9 @@ class WebsiteDiagnosisTool:
             if 30 <= len(title_text) <= 60:
                 score += 15
             else:
-                issues.append(f"タイトルの長さが最適ではありません（現在: {len(title_text)}文字、推奨: 30-60文字）")
+                issues.append(f"Title length is not optimal (current: {len(title_text)} chars, recommended: 30-60 chars)")
         else:
-            issues.append("タイトルタグがありません")
+            issues.append("Title tag not found")
             seo['title'] = None
         
         # メタディスクリプション
@@ -96,9 +96,9 @@ class WebsiteDiagnosisTool:
             if 120 <= len(desc_text) <= 160:
                 score += 15
             else:
-                issues.append(f"メタディスクリプションの長さが最適ではありません（現在: {len(desc_text)}文字、推奨: 120-160文字）")
+                issues.append(f"Meta description length is not optimal (current: {len(desc_text)} chars, recommended: 120-160 chars)")
         else:
-            issues.append("メタディスクリプションがありません")
+            issues.append("Meta description not found")
             seo['meta_description'] = None
         
         # 見出しタグの分析
@@ -114,15 +114,15 @@ class WebsiteDiagnosisTool:
         if h1_count == 1:
             score += 10
         elif h1_count == 0:
-            issues.append("H1タグがありません")
+            issues.append("H1 tag not found")
         else:
-            issues.append(f"H1タグが複数あります（{h1_count}個）")
+            issues.append(f"Multiple H1 tags found ({h1_count})")
         
         # 見出し構造のチェック
         if headings['h2']:
             score += 5
         else:
-            issues.append("H2タグがありません")
+            issues.append("H2 tag not found")
         
         # 画像のalt属性チェック
         images = self.soup.find_all('img')
@@ -138,9 +138,9 @@ class WebsiteDiagnosisTool:
                 score += 15
             elif alt_ratio >= 0.7:
                 score += 10
-                issues.append(f"一部の画像にalt属性がありません（{images_with_alt}/{total_images}）")
+                issues.append(f"Some images missing alt attributes ({images_with_alt}/{total_images})")
             else:
-                issues.append(f"多くの画像にalt属性がありません（{images_with_alt}/{total_images}）")
+                issues.append(f"Many images missing alt attributes ({images_with_alt}/{total_images})")
         
         # メタキーワード（参考情報）
         meta_keywords = self.soup.find('meta', attrs={'name': 'keywords'})
@@ -221,7 +221,7 @@ class WebsiteDiagnosisTool:
         if is_https:
             score += 30
         else:
-            issues.append("HTTPSを使用していません（セキュリティリスク）")
+            issues.append("HTTPS not enabled (security risk)")
         
         # セキュリティヘッダーのチェック
         headers = self.response.headers
@@ -252,7 +252,7 @@ class WebsiteDiagnosisTool:
             if value:
                 score += header_scores.get(header, 0)
             else:
-                issues.append(f"{header}ヘッダーが設定されていません")
+                issues.append(f"{header} header not set")
         
         # SSL証明書の確認（HTTPSの場合）
         if is_https:
@@ -268,7 +268,7 @@ class WebsiteDiagnosisTool:
                             'valid_until': cert.get('notAfter')
                         }
             except Exception as e:
-                issues.append(f"SSL証明書の確認に失敗: {str(e)}")
+                issues.append(f"SSL certificate check failed: {str(e)}")
                 security['ssl_certificate'] = None
         
         # Cookie設定の確認
@@ -304,12 +304,12 @@ class WebsiteDiagnosisTool:
             score += 30
         elif self.load_time < 2:
             score += 20
-            issues.append(f"ページ読み込み時間がやや遅いです（{round(self.load_time, 2)}秒）")
+            issues.append(f"Page load time is slightly slow ({round(self.load_time, 2)}s)")
         elif self.load_time < 3:
             score += 10
-            issues.append(f"ページ読み込み時間が遅いです（{round(self.load_time, 2)}秒）")
+            issues.append(f"Page load time is slow ({round(self.load_time, 2)}s)")
         else:
-            issues.append(f"ページ読み込み時間が非常に遅いです（{round(self.load_time, 2)}秒）")
+            issues.append(f"Page load time is very slow ({round(self.load_time, 2)}s)")
         
         # ページサイズ
         page_size = len(self.response.content)
@@ -320,12 +320,12 @@ class WebsiteDiagnosisTool:
             score += 20
         elif page_size < 1024 * 1024:  # 1MB未満
             score += 15
-            issues.append(f"ページサイズがやや大きいです（{round(page_size/1024, 2)}KB）")
+            issues.append(f"Page size is slightly large ({round(page_size/1024, 2)}KB)")
         elif page_size < 3 * 1024 * 1024:  # 3MB未満
             score += 5
-            issues.append(f"ページサイズが大きいです（{round(page_size/1024/1024, 2)}MB）")
+            issues.append(f"Page size is large ({round(page_size/1024/1024, 2)}MB)")
         else:
-            issues.append(f"ページサイズが非常に大きいです（{round(page_size/1024/1024, 2)}MB）")
+            issues.append(f"Page size is very large ({round(page_size/1024/1024, 2)}MB)")
         
         # リソース数のカウント
         resources = {
@@ -342,7 +342,7 @@ class WebsiteDiagnosisTool:
         elif total_resources < 50:
             score += 10
         else:
-            issues.append(f"リソース数が多すぎます（合計: {total_resources}）")
+            issues.append(f"Too many resources (total: {total_resources})")
         
         # 圧縮の確認
         content_encoding = self.response.headers.get('Content-Encoding')
@@ -350,7 +350,7 @@ class WebsiteDiagnosisTool:
         if content_encoding in ['gzip', 'br', 'deflate']:
             score += 15
         else:
-            issues.append("コンテンツ圧縮が使用されていません")
+            issues.append("Content compression not enabled")
         
         # キャッシュ制御
         cache_control = self.response.headers.get('Cache-Control')
@@ -358,7 +358,7 @@ class WebsiteDiagnosisTool:
         if cache_control:
             score += 10
         else:
-            issues.append("Cache-Controlヘッダーが設定されていません")
+            issues.append("Cache-Control header not set")
         
         # 画像の最適化チェック
         large_images = []
@@ -374,7 +374,7 @@ class WebsiteDiagnosisTool:
         inline_styles = len(self.soup.find_all(style=True))
         performance['inline_styles_count'] = inline_styles
         if inline_styles > 10:
-            issues.append(f"インラインスタイルが多用されています（{inline_styles}個）")
+            issues.append(f"Excessive inline styles ({inline_styles})")
         
         performance['score'] = min(score, 100)
         performance['issues'] = issues
@@ -395,7 +395,7 @@ class WebsiteDiagnosisTool:
         if lang:
             score += 15
         else:
-            issues.append("HTML要素にlang属性がありません")
+            issues.append("HTML element missing lang attribute")
         
         # 画像のalt属性（再確認）
         images = self.soup.find_all('img')
@@ -408,9 +408,9 @@ class WebsiteDiagnosisTool:
                 score += 20
             elif alt_ratio >= 0.8:
                 score += 15
-                issues.append(f"{len(images_without_alt)}個の画像にalt属性がありません")
+                issues.append(f"{len(images_without_alt)} images missing alt attributes")
             else:
-                issues.append(f"多くの画像にalt属性がありません（{len(images_without_alt)}/{len(images)}）")
+                issues.append(f"Many images missing alt attributes ({len(images_without_alt)}/{len(images)})")
         
         # フォームラベル
         inputs = self.soup.find_all(['input', 'textarea', 'select'])
@@ -431,9 +431,9 @@ class WebsiteDiagnosisTool:
                 score += 15
             elif inputs_with_labels >= len(inputs) * 0.7:
                 score += 10
-                issues.append(f"一部のフォーム要素にラベルがありません（{inputs_with_labels}/{len(inputs)}）")
+                issues.append(f"Some form elements missing labels ({inputs_with_labels}/{len(inputs)})")
             else:
-                issues.append(f"多くのフォーム要素にラベルがありません（{inputs_with_labels}/{len(inputs)}）")
+                issues.append(f"Many form elements missing labels ({inputs_with_labels}/{len(inputs)})")
         
         # ARIA属性の使用
         aria_elements = self.soup.find_all(attrs={'role': True})
@@ -452,7 +452,7 @@ class WebsiteDiagnosisTool:
         if found_landmarks['main'] > 0:
             score += 10
         else:
-            issues.append("mainランドマークがありません")
+            issues.append("Main landmark not found")
         
         if found_landmarks['nav'] > 0:
             score += 5
@@ -473,7 +473,7 @@ class WebsiteDiagnosisTool:
         if not heading_skip and len(headings_order) > 0:
             score += 10
         elif heading_skip:
-            issues.append("見出しレベルが飛ばされています（h2の後にh4など）")
+            issues.append("Heading hierarchy issues (e.g., h4 after h2)")
         
         # リンクテキストのチェック
         links = self.soup.find_all('a')
@@ -483,12 +483,12 @@ class WebsiteDiagnosisTool:
         if len(empty_links) == 0 and len(links) > 0:
             score += 10
         elif len(empty_links) > 0:
-            issues.append(f"{len(empty_links)}個のリンクにテキストがありません")
+            issues.append(f"{len(empty_links)} links without text")
         
         # タブインデックスの確認
         negative_tabindex = self.soup.find_all(attrs={'tabindex': lambda x: x and int(x) < 0})
         if len(negative_tabindex) > 0:
-            issues.append(f"負のtabindex値が使用されています（{len(negative_tabindex)}個）")
+            issues.append(f"Negative tabindex values used ({len(negative_tabindex)})")
         
         accessibility['score'] = min(score, 100)
         accessibility['issues'] = issues
