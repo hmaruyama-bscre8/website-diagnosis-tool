@@ -31,8 +31,12 @@ class WebsiteDiagnosisTool:
             'overall_score': 0
         }
         
-    def run_diagnosis(self):
+    def diagnose(self):
         """全ての診断を実行"""
+        return self.run_diagnosis()
+    
+    def run_diagnosis(self):
+        """全ての診断を実行（内部メソッド）"""
         print(f"🔍 診断開始: {self.url}\n")
         
         # ページの取得
