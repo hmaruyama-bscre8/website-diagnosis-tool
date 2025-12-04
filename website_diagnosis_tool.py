@@ -509,6 +509,15 @@ class WebsiteDiagnosisTool:
             overall += self.results[category]['score'] * weight
         
         self.results['overall_score'] = round(overall, 1)
+        
+        # Streamlitアプリ用に scores キーを追加
+        self.results['scores'] = {
+            'seo': self.results['seo']['score'],
+            'security': self.results['security']['score'],
+            'performance': self.results['performance']['score'],
+            'accessibility': self.results['accessibility']['score']
+        }
+        
         print(f"\n🎯 総合スコア: {self.results['overall_score']}/100")
     
     def generate_report(self):
